@@ -4,11 +4,11 @@ import net.minecraft.SharedConstants;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameRules;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import io.github.arkosammy12.creeperhealing.blocks.AffectedBlock;
 import io.github.arkosammy12.creeperhealing.blocks.SingleAffectedBlock;
+import net.minecraft.world.rule.GameRules;
 
 import java.util.List;
 
@@ -30,7 +30,7 @@ public class DaytimeExplosionEvent extends AbstractExplosionEvent {
 
     @Override
     public void setup(ServerWorld world) {
-        if (!world.getGameRules().getBoolean(GameRules.DO_DAYLIGHT_CYCLE)) {
+        if (!world.getGameRules().getValue(GameRules.ADVANCE_TIME)) {
             return;
         }
         this.healTimer = SharedConstants.TICKS_PER_IN_GAME_DAY - (world.getTimeOfDay() % SharedConstants.TICKS_PER_IN_GAME_DAY);

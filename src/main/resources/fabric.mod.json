@@ -24,10 +24,10 @@
 	],
 	"depends": {
 		"fabricloader": ">=0.18.4",
-		"minecraft": "1.21.10",
+		"minecraft": "1.21.11",
 		"java": ">=21",
 		"fabric-api": "*",
-		"monkey-utils" : ">=1.0.2"
+		"monkey-utils" : ">=1.0.3"
 	},
 	"custom": {
 	  "lithium:options": {

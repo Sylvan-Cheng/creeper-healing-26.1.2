@@ -18,6 +18,7 @@ import net.minecraft.util.shape.VoxelShape;
 import net.minecraft.world.Heightmap;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldView;
+import net.minecraft.world.attribute.EnvironmentAttributeAccess;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.biome.BiomeKeys;
 import net.minecraft.world.biome.source.BiomeAccess;
@@ -101,6 +102,11 @@ public class EmptyWorld implements WorldView {
     @Override
     public FeatureSet getEnabledFeatures() {
         return this.world.getEnabledFeatures();
+    }
+
+    @Override
+    public EnvironmentAttributeAccess getEnvironmentAttributes() {
+        return this.world.getEnvironmentAttributes();
     }
 
     @Override
