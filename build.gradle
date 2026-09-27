@@ -107,6 +107,7 @@ jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
+	from("COPYING.GPLv3")
 	from("MONKEY-UTILS-LICENSE")
 }
 

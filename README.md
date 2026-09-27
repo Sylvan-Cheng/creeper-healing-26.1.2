@@ -6,7 +6,10 @@ This branch is an unofficial port of [ArkoSammy12's Creeper Healing](https://git
 
 The development setup can be opened with `D:\Codes\Minecraft\Open-Fabric-VSCode.ps1`. This launcher points Java, Gradle, VS Code user data, and extensions to the D: drive. For a local build, set `JAVA_HOME` to a Java 25 installation and `GRADLE_USER_HOME` to a directory outside C:, then run `./gradlew.bat build`. If dependencies need a local HTTP proxy on port 7897, set `JAVA_TOOL_OPTIONS` to `-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7897 -Dhttp.nonProxyHosts=localhost|127.*` before building.
 
-The mod includes adapted Monkey Utils source under `src/main/kotlin` and its MIT license in `MONKEY-UTILS-LICENSE`. Public distribution of this unofficial port is pending clarification with the original author about the upstream license information.
+This unofficial port is distributed under `LGPL-3.0-only`, with the LGPL 3 terms in `LICENSE` and the GPL 3 terms incorporated by reference in `COPYING.GPLv3`. It includes adapted Monkey Utils source under `src/main/kotlin`; its MIT notice is retained in `MONKEY-UTILS-LICENSE`. The original project and author are credited above, and this port is not an official upstream release.
+
+Install the non-sources JAR from a release in the `mods` folder of Minecraft 26.1.2 with Fabric Loader 0.19.5, Fabric API 0.155.3+26.1.2, and Fabric Language Kotlin 1.14.1+kotlin.2.4.20. Back up existing worlds and configuration files before replacing a previous version. The mod creates `config/creeper-healing.toml` on first run.
+
 This server and client side, customizable mod allows the world to automatically heal Creeper explosions. It has support for configuring a custom block-replace list, for telling the mod what blocks to use to replace a previously broken one, allowing for balancing and preventing potential abuse of this mod.
 
 ## Features

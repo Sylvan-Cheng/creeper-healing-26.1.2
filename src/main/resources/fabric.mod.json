@@ -7,11 +7,15 @@
 	"authors": [
 		"ArkoSammy12"
 	],
+	"contributors": [
+		"Sylvan-Cheng (26.1.2 port)"
+	],
 	"contact": {
-		"homepage": "https://github.com/ArkoSammy12",
-		"sources": "https://github.com/ArkoSammy12/creeper-healing"
+		"homepage": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2",
+		"sources": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2",
+		"issues": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2/issues"
 	},
-	"license": "LGPL-2.1-only",
+	"license": "LGPL-3.0-only",
 	"icon": "assets/creeperhealing/icon.png",
 	"environment": "*",
 	"entrypoints": {
