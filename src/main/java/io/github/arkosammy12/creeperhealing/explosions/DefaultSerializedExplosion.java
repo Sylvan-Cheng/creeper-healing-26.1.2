@@ -2,7 +2,6 @@ package io.github.arkosammy12.creeperhealing.explosions;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
-import net.minecraft.util.math.BlockPos;
 import io.github.arkosammy12.creeperhealing.CreeperHealing;
 import io.github.arkosammy12.creeperhealing.blocks.AffectedBlock;
 import io.github.arkosammy12.creeperhealing.blocks.DefaultSerializedAffectedBlock;
@@ -12,6 +11,7 @@ import io.github.arkosammy12.creeperhealing.util.ExplosionUtils;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import net.minecraft.core.BlockPos;
 
 public record DefaultSerializedExplosion(
         String healingMode,

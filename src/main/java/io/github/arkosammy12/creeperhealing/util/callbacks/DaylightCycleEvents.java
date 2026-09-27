@@ -2,8 +2,7 @@ package io.github.arkosammy12.creeperhealing.util.callbacks;
 
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.EventFactory;
-import net.minecraft.server.world.ServerWorld;
-
+import net.minecraft.server.level.ServerLevel;
 import java.util.function.BooleanSupplier;
 
 public interface DaylightCycleEvents {
@@ -16,7 +15,7 @@ public interface DaylightCycleEvents {
             });
 
     interface NightSkipped {
-        void onNightSkipped(ServerWorld world, BooleanSupplier shouldKeepTicking);
+        void onNightSkipped(ServerLevel world, BooleanSupplier shouldKeepTicking);
     }
 
 }

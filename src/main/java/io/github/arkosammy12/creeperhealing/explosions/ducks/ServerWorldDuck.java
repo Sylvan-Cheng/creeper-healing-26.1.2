@@ -1,8 +1,7 @@
 package io.github.arkosammy12.creeperhealing.explosions.ducks;
 
-import net.minecraft.util.math.BlockPos;
-
 import java.util.Collection;
+import net.minecraft.core.BlockPos;
 
 public interface ServerWorldDuck {
 

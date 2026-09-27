@@ -1,20 +1,19 @@
 package io.github.arkosammy12.creeperhealing.util;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.List;
 import java.util.Map;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.Tuple;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 
 public record ExplosionContext(
         List<BlockPos> vanillaAffectedPositions,
         List<BlockPos> indirectlyAffectedPositions,
-        Map<BlockPos, Pair<BlockState, BlockEntity>> affectedStatesAndBlockEntities,
-        ServerWorld world,
-        World.ExplosionSourceType explosionSourceType
+        Map<BlockPos, Tuple<BlockState, BlockEntity>> affectedStatesAndBlockEntities,
+        ServerLevel world,
+        Level.ExplosionInteraction explosionSourceType
 ) {
 }

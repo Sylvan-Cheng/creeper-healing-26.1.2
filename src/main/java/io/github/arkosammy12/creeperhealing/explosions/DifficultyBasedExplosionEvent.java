@@ -1,12 +1,12 @@
 package io.github.arkosammy12.creeperhealing.explosions;
 
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
 import io.github.arkosammy12.creeperhealing.blocks.AffectedBlock;
 import io.github.arkosammy12.creeperhealing.blocks.SingleAffectedBlock;
 import io.github.arkosammy12.creeperhealing.config.ConfigUtils;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 public class DifficultyBasedExplosionEvent extends AbstractExplosionEvent {
 
@@ -24,7 +24,7 @@ public class DifficultyBasedExplosionEvent extends AbstractExplosionEvent {
     }
 
     @Override
-    public void setup(ServerWorld world) {
+    public void setup(ServerLevel world) {
         final int difficultyMultiplier = switch (world.getDifficulty()) {
             case PEACEFUL -> -2;
             case EASY -> -1;

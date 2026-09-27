@@ -1,10 +1,10 @@
 package io.github.arkosammy12.creeperhealing.explosions;
 
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
 import io.github.arkosammy12.creeperhealing.blocks.AffectedBlock;
 
 import java.util.List;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
 
 public class DefaultExplosionEvent extends AbstractExplosionEvent {
 
@@ -23,7 +23,7 @@ public class DefaultExplosionEvent extends AbstractExplosionEvent {
 
 
     @Override
-    public void setup(ServerWorld world) {
+    public void setup(ServerLevel world) {
 
     }
 

@@ -1,13 +1,13 @@
 package io.github.arkosammy12.creeperhealing.util;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.registry.tag.BlockTags;
-import net.minecraft.registry.tag.TagKey;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import net.minecraft.tags.BlockTags;
+import net.minecraft.tags.TagKey;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 
 /**
  * This class is used to store the blocks that are excluded from the healing process,
@@ -29,11 +29,11 @@ public enum ExcludedBlocks {
             return false;
         }
         return Arrays.stream(ExcludedBlocks.values()).anyMatch(excludedBlock -> {
-            if (block.getDefaultState().isOf(excludedBlock.blockInstance)) {
+            if (block.defaultBlockState().is(excludedBlock.blockInstance)) {
                 return true;
             }
             TagKey<Block> blockTag = excludedBlock.blockTag;
-            return blockTag != null && block.getDefaultState().isIn(blockTag);
+            return blockTag != null && block.defaultBlockState().is(blockTag);
         });
     }
 
@@ -42,11 +42,11 @@ public enum ExcludedBlocks {
             return false;
         }
         return Arrays.stream(ExcludedBlocks.values()).anyMatch(excludedBlock -> {
-            if (state.isOf(excludedBlock.blockInstance)) {
+            if (state.is(excludedBlock.blockInstance)) {
                 return true;
             }
             TagKey<Block> blockTag = excludedBlock.blockTag;
-            return blockTag != null && state.isIn(blockTag);
+            return blockTag != null && state.is(blockTag);
         });
     }
 
