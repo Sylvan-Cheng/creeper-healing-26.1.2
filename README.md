@@ -1,4 +1,12 @@
 # Creeper Healing
+
+## Unofficial Minecraft 26.1.2 port
+
+This branch is an unofficial port of [ArkoSammy12's Creeper Healing](https://github.com/ArkoSammy12/creeper-healing). Its mod ID is `creeperhealing_2612`, so it does not replace the original mod ID. It keeps the original `config/creeper-healing.toml` filename. The port uses Java 25, Fabric Loader 0.19.5, Fabric API 0.155.3+26.1.2, and Fabric Language Kotlin 1.14.1+kotlin.2.4.20.
+
+The development setup can be opened with `D:\Codes\Minecraft\Open-Fabric-VSCode.ps1`. This launcher points Java, Gradle, VS Code user data, and extensions to the D: drive. For a local build, set `JAVA_HOME` to a Java 25 installation and `GRADLE_USER_HOME` to a directory outside C:, then run `./gradlew.bat build`. If dependencies need a local HTTP proxy on port 7897, set `JAVA_TOOL_OPTIONS` to `-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7897 -Dhttp.nonProxyHosts=localhost|127.*` before building.
+
+The mod includes adapted Monkey Utils source under `src/main/kotlin` and its MIT license in `MONKEY-UTILS-LICENSE`. Public distribution of this unofficial port is pending clarification with the original author about the upstream license information.
 This server and client side, customizable mod allows the world to automatically heal Creeper explosions. It has support for configuring a custom block-replace list, for telling the mod what blocks to use to replace a previously broken one, allowing for balancing and preventing potential abuse of this mod.
 
 ## Features
@@ -81,10 +89,10 @@ You can also find settings to toggle extra features, such as:
 
 ### Commands
 
-All of the mod's settings can also be modified in-game via commands. Access all of them via the `/creeper-healing` parent command. The config file also supports being reloaded in-game via `/creeper-healing reload_config` to avoid having to restart the server or world. Note that all commands require operator permission.
+All of the mod's settings can also be modified in-game via commands. Access them via `/creeper-healing config`. The config file can be reloaded in-game via `/creeper-healing config reload` to avoid restarting the server or world. Note that all commands require operator permission.
 
 ## Configuration  File
-When the server or game is started, the mod will look for an existing `creeper-healing.toml` file for the config folder of your game. If it exists, it will read the values from there. If not, it will create a new config file in `/config/creeper-healing.toml`. You can then edit this file to configure the mod, and restart the server or game to apply the changes, or use the `/creeper-healing reload_config` in-game command. 
+When the server or game is started, the mod will look for an existing `creeper-healing.toml` file for the config folder of your game. If it exists, it will read the values from there. If not, it will create a new config file in `/config/creeper-healing.toml`. You can then edit this file to configure the mod, and restart the server or game to apply the changes, or use the `/creeper-healing config reload` in-game command.
 
 The following is the default configuration file generated upon first mod initialization or whenever the mod fails to find the config file during server or world shutdown.
 
