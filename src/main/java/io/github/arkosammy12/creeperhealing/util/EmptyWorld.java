@@ -109,7 +109,6 @@ public class EmptyWorld implements LevelReader {
         return this.world.environmentAttributes();
     }
 
-    @Override
     public float getShade(Direction direction, boolean shaded) {
         return 0;
     }
@@ -124,7 +123,6 @@ public class EmptyWorld implements LevelReader {
         return this.world.getWorldBorder();
     }
 
-    @Override
     public List<VoxelShape> getEntityCollisions(@Nullable Entity entity, AABB box) {
         return new ArrayList<>();
     }

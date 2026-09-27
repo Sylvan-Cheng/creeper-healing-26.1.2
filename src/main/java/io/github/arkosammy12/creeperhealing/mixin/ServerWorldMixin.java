@@ -7,6 +7,8 @@ import io.github.arkosammy12.creeperhealing.explosions.ducks.ServerWorldDuck;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import io.github.arkosammy12.creeperhealing.explosions.ducks.ExplosionImplDuck;
 import io.github.arkosammy12.creeperhealing.util.callbacks.DaylightCycleEvents;
 
@@ -29,9 +31,8 @@ public abstract class ServerWorldMixin implements ServerWorldDuck {
     @Unique
     private final Collection<BlockPos> affectedBlockPositions = new ArrayList<>();
 
-    @WrapOperation(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/level/ServerLevel;setDayTime(J)V", ordinal = 0))
-    private void fastForwardDaytimeHealingModeExplosionsOnNightSkipped(ServerLevel instance, long timeOfDay, Operation<Void> original, @Local(argsOnly = true) BooleanSupplier shouldKeepTicking) {
-        original.call(instance, timeOfDay);
+    @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/clock/ServerClockManager;moveToTimeMarker(Lnet/minecraft/core/Holder;Lnet/minecraft/resources/ResourceKey;)Z", shift = At.Shift.AFTER))
+    private void fastForwardDaytimeHealingModeExplosionsOnNightSkipped(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {
         DaylightCycleEvents.ON_NIGHT_SKIPPED.invoker().onNightSkipped(((ServerLevel) (Object) this), shouldKeepTicking);
     }
 

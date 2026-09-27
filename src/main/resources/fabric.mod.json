@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "creeperhealing",
+	"id": "creeperhealing_2612",
 	"version": "${version}",
-	"name": "Creeper Healing",
+	"name": "Creeper Healing (Unofficial 26.1.2 Port)",
 	"description": "A server side, customizable Fabric mod to automatically and naturally heal Creeper explosions (and other types of explosions!).",
 	"authors": [
 		"ArkoSammy12"
@@ -11,23 +11,27 @@
 		"homepage": "https://github.com/ArkoSammy12",
 		"sources": "https://github.com/ArkoSammy12/creeper-healing"
 	},
-	"license": "LGPL-3.0-only",
+	"license": "LGPL-2.1-only",
 	"icon": "assets/creeperhealing/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-          "io.github.arkosammy12.creeperhealing.CreeperHealing"
+          "io.github.arkosammy12.creeperhealing.CreeperHealing",
+          {
+            "adapter": "kotlin",
+            "value": "io.github.arkosammy12.monkeyutils.MonkeyUtils"
+          }
 		]
 	},
 	"mixins": [
 		"creeper-healing.mixins.json"
 	],
 	"depends": {
-		"fabricloader": ">=0.18.4",
-		"minecraft": "1.21.11",
-		"java": ">=21",
+		"fabricloader": ">=0.19.5",
+		"minecraft": "26.1.2",
+		"java": ">=25",
 		"fabric-api": "*",
-		"monkey-utils" : ">=1.0.3"
+		"fabric-language-kotlin": "*"
 	},
 	"custom": {
 	  "lithium:options": {

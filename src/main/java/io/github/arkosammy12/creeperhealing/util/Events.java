@@ -110,9 +110,11 @@ public final class Events {
 
     // Recalculate DaytimeExplosionEvents' timers when ticks are added or set
     private static void onTimeCommand(CommandSourceStack serverCommandSource, int time, int newTime) {
+        long dayTime = Math.floorMod(serverCommandSource.getLevel().getOverworldClockTime(), SharedConstants.TICKS_PER_GAME_DAY);
+        long ticksUntilDaylight = dayTime < 12000 ? 1 : SharedConstants.TICKS_PER_GAME_DAY - dayTime;
         for (ExplosionEvent explosionEvent : CreeperHealing.EXPLOSION_MANAGER.getExplosionEvents().toList()) {
             if (explosionEvent instanceof DaytimeExplosionEvent daytimeExplosionEvent && explosionEvent.getHealTimer() > 0) {
-                daytimeExplosionEvent.setHealTimer(SharedConstants.TICKS_PER_GAME_DAY - newTime);
+                daytimeExplosionEvent.setHealTimer(ticksUntilDaylight);
             }
         }
     }

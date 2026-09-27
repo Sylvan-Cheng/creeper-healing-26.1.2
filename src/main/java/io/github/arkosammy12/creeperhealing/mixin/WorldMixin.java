@@ -30,7 +30,7 @@ public abstract class WorldMixin {
         isBlockAtPosExcluded.set(ExcludedBlocks.isExcluded(this.getBlockState(pos)));
     }
 
-    @WrapOperation(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;updateNeighbors(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;II)V"))
+    @WrapOperation(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;updateIndirectNeighbourShapes(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;II)V"))
     private void preventItemsFromDroppingOnExplosionsIfNeeded(BlockState instance, LevelAccessor worldAccess, BlockPos blockPos, int flags, int maxUpdateDepth, Operation<Void> original, @Share("isBlockAtPosExcluded") LocalBooleanRef isBlockAtPosExcluded) {
         // Hardcoded exception. Place before all other logic
         if (isBlockAtPosExcluded.get()) {
@@ -39,6 +39,11 @@ public abstract class WorldMixin {
         }
         int newFlags = ExplosionUtils.DROP_BLOCK_ITEMS.get() ? flags : flags | Block.UPDATE_SUPPRESS_DROPS;
         original.call(instance, worldAccess, blockPos, newFlags, maxUpdateDepth);
+    }
+
+    @WrapOperation(method = "setBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;II)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/state/BlockState;updateNeighbourShapes(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;II)V"))
+    private void preventNeighborItemsFromDropping(BlockState instance, LevelAccessor worldAccess, BlockPos blockPos, int flags, int maxUpdateDepth, Operation<Void> original, @Share("isBlockAtPosExcluded") LocalBooleanRef isBlockAtPosExcluded) {
+        preventItemsFromDroppingOnExplosionsIfNeeded(instance, worldAccess, blockPos, flags, maxUpdateDepth, original, isBlockAtPosExcluded);
     }
 
 }

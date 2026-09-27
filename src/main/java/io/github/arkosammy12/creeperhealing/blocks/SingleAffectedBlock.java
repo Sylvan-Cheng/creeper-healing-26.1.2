@@ -2,7 +2,6 @@ package io.github.arkosammy12.creeperhealing.blocks;
 
 import io.github.arkosammy12.monkeyconfig.base.Setting;
 import io.github.arkosammy12.monkeyconfig.sections.maps.StringMapSection;
-import net.minecraft.block.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.BuiltInRegistries;

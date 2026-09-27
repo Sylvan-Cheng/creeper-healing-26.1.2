@@ -1,6 +1,10 @@
 pluginManagement {
 	repositories {
 		maven {
+			name = 'HuaweiMavenMirror'
+			url = 'https://mirrors.huaweicloud.com/repository/maven'
+		}
+		maven {
 			name = 'Fabric'
 			url = 'https://maven.fabricmc.net/'
 		}

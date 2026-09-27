@@ -1,5 +1,6 @@
 plugins {
-	id 'fabric-loom' version '1.14-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
+	id 'org.jetbrains.kotlin.jvm' version '2.4.20'
 	id 'maven-publish'
 }
 
@@ -11,27 +12,15 @@ base {
 }
 
 repositories {
-	// Add repositories to retrieve artifacts from in here.
-	// You should only use this when depending on other mods because
-	// Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
-	// See https://docs.gradle.org/current/userguide/declaring_repositories.html
-	// for more information about repositories.
+	maven {
+		name = 'HuaweiMavenMirror'
+		url = 'https://mirrors.huaweicloud.com/repository/maven'
+	}
 	mavenCentral()
 
 	maven {
 		name "enjaraiMavenReleases"
 		url "https://maven.enjarai.dev/releases"
-	}
-
-	maven {
-		// Patbox's SGui
-		name "nucleoid"
-		url "https://maven.nucleoid.xyz"
-	}
-
-	maven {
-		name = "modrinth"
-		url = "https://api.modrinth.com/maven"
 	}
 
 }
@@ -40,7 +29,7 @@ loom {
     splitEnvironmentSourceSets()
 
 	mods {
-		"creeper-healing" {
+		"creeperhealing_2612" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -52,7 +41,7 @@ loom {
 			name "Data Generation"
 			vmArg "-Dfabric-api.datagen"
 			vmArg "-Dfabric-api.datagen.output-dir=${file("src/main/generated")}"
-			vmArg "-Dfabric-api.datagen.modid=creeper-healing"
+			vmArg "-Dfabric-api.datagen.modid=creeperhealing_2612"
  
 			runDir "build/datagen"
 		}
@@ -72,30 +61,17 @@ sourceSets {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
-
-	// Uncomment the following line to enable the deprecated Fabric API modules. 
-	// These are included in the Fabric API production distribution and allow you to update your mod to the latest modules at a later more convenient time.
-
-	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
-
-	// Monkey Utils
-	modImplementation("maven.modrinth:uApL7Qhc:${project.monkey_utils}")
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Monkey Config
 	include(implementation("io.github.arkosammy12:monkey-config:${project.monkey_config}"))
 
 	// Fabric Permissions API
-	include(modImplementation('me.lucko:fabric-permissions-api:0.4.0'))
+	include(implementation('me.lucko:fabric-permissions-api:0.7.0'))
 
-	modImplementation("net.fabricmc:fabric-language-kotlin:${property("fabric_kotlin_version")}")
-
-	// Creeper Overhaul
-	//modImplementation("maven.modrinth:MI1LWe93:${project.creeper_overhaul_version}")
+	implementation("net.fabricmc:fabric-language-kotlin:${property("fabric_kotlin_version")}")
 
 }
 
@@ -108,7 +84,13 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 21
+	it.options.release = 25
+}
+
+kotlin {
+	compilerOptions {
+		jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25
+	}
 }
 
 java {
@@ -117,14 +99,15 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_21
-	targetCompatibility = JavaVersion.VERSION_21
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
 	from("LICENSE") {
 		rename { "${it}_${project.base.archivesName.get()}"}
 	}
+	from("MONKEY-UTILS-LICENSE")
 }
 
 // configure the maven publication
