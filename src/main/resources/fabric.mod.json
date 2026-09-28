@@ -11,9 +11,9 @@
 		"Sylvan-Cheng (26.1.2 port)"
 	],
 	"contact": {
-		"homepage": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2",
-		"sources": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2",
-		"issues": "https://github.com/Sylvan-Cheng/creeper-healing-26.1.2/issues"
+		"homepage": "https://github.com/Sylvan-Cheng/creeper-healing-sylvan",
+		"sources": "https://github.com/Sylvan-Cheng/creeper-healing-sylvan",
+		"issues": "https://github.com/Sylvan-Cheng/creeper-healing-sylvan/issues"
 	},
 	"license": "LGPL-3.0-only",
 	"icon": "assets/creeperhealing/icon.png",

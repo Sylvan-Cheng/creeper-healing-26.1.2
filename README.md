@@ -1,205 +1,42 @@
-# Creeper Healing
+# Creeper Healing: Sylvan Edition
 
-## Unofficial Minecraft 26.1.2 port
+适用于 Minecraft 26.1.2 的非官方 Fabric 移植版。爆炸后，模组会按设定的延迟逐步恢复被破坏的方块。项目基于 [ArkoSammy12 的 Creeper Healing](https://github.com/ArkoSammy12/creeper-healing) 2.1.4；本仓库由 Sylvan-Cheng 维护，与原作者的正式发行版无关。
 
-This branch is an unofficial port of [ArkoSammy12's Creeper Healing](https://github.com/ArkoSammy12/creeper-healing). Its mod ID is `creeperhealing_sylvan`, distinct from the original mod ID. The display name is "Creeper Healing: Sylvan Edition (Unofficial)". It keeps the original `config/creeper-healing.toml` filename. The port uses Java 25, Fabric Loader 0.19.5, Fabric API 0.155.3+26.1.2, and Fabric Language Kotlin 1.14.1+kotlin.2.4.20.
+## 安装
 
-The development setup can be opened with `D:\Codes\Minecraft\Open-Fabric-VSCode.ps1`. This launcher points Java, Gradle, VS Code user data, and extensions to the D: drive. For a local build, set `JAVA_HOME` to a Java 25 installation and `GRADLE_USER_HOME` to a directory outside C:, then run `./gradlew.bat build`. If dependencies need a local HTTP proxy on port 7897, set `JAVA_TOOL_OPTIONS` to `-Dhttp.proxyHost=127.0.0.1 -Dhttp.proxyPort=7897 -Dhttps.proxyHost=127.0.0.1 -Dhttps.proxyPort=7897 -Dhttp.nonProxyHosts=localhost|127.*` before building.
+- Minecraft **26.1.2**、Java **25**、Fabric Loader **0.19.5** 或更新的兼容版本。
+- 安装对应 26.1.2 的 Fabric API，以及 Fabric Language Kotlin。
+- 从[本仓库的 Releases](https://github.com/Sylvan-Cheng/creeper-healing-sylvan/releases)下载普通 `.jar`，放入游戏或服务端的 `mods` 目录。不要安装名称带 `sources` 的源码包。
 
-This unofficial port is distributed under `LGPL-3.0-only`, with the LGPL 3 terms in `LICENSE` and the GPL 3 terms incorporated by reference in `COPYING.GPLv3`. It includes adapted Monkey Utils source under `src/main/kotlin`; its MIT notice is retained in `MONKEY-UTILS-LICENSE`. The original project and author are credited above, and this port is not an official upstream release.
+从旧版 `creeperhealing_2612` 升级时，先移除旧 JAR，避免两个模组同时处理爆炸。升级世界前建议备份存档和 `config/creeper-healing.toml`。本版沿用原有配置文件名和世界中的 `scheduled-explosions.json`；模组 ID 为 `creeperhealing_sylvan`。
 
-### Behavior differences from upstream 2.1.4
+## 功能与配置
 
-This port is based on upstream commit [`4fcf0a0`](https://github.com/ArkoSammy12/creeper-healing/commit/4fcf0a002218dd6d2080f6c1c413a81c537897c1). In the normal mode, blocks still wait for their own delay and heal in sequence. The blast-resistance mode's randomized delays can intentionally produce bursts.
+默认仅恢复生物造成的爆炸，包括苦力怕爆炸。可在 `config/creeper-healing.toml` 中分别控制生物、TNT、床与末地水晶等爆炸来源是否恢复、是否掉落物品。配置文件在首次启动时生成；拥有管理员权限的玩家也可使用 `/creeper-healing config` 修改设置，或用 `/creeper-healing config reload` 重新加载文件。
 
-- In daytime mode, if every affected position is unlit when the first block is due to heal, the task waits and checks for light about every 21 server ticks. Upstream ends the task at that point. Once the first block has healed, later blocks are not gated by light.
-- A block that cannot be restored remains pending and is retried without a fixed limit. With multiple blocks, a failed placement attempt can move that block to the back of the queue. Upstream can skip or finish a blocked block instead. If a player builds at an affected position and later removes that construction, the old block may then be restored. There is currently no in-game command to cancel an individual pending task. Disabling healing for an explosion source only affects new explosions.
-- Pending tasks are saved on normal shutdown. While the server is running, this port also attempts to save new tasks promptly, healing progress within 200 server ticks, and active waiting tasks every 1200 server ticks. An unexpected shutdown can still lose progress since the last successful save. Unlike upstream, restarting alone does not replace saved mode-specific block delays with the ordinary configured delay.
+常用设置：
 
-Install the non-sources JAR from a release in the `mods` folder of Minecraft 26.1.2 with Fabric Loader 0.19.5, Fabric API 0.155.3+26.1.2, and Fabric Language Kotlin 1.14.1+kotlin.2.4.20. Remove the previous `creeperhealing_2612` JAR when updating; installing both versions would run two explosion handlers. Back up existing worlds and configuration files before replacing a previous version. The saved explosion file and `config/creeper-healing.toml` keep their existing paths. The mod creates the config file on first run if needed.
+| 配置项 | 用途 |
+| --- | --- |
+| `[delays]` | 设置爆炸开始恢复和逐块恢复的延迟，单位为秒，最小值为 `0.05`。 |
+| `[explosion_healing_mode]` | 选择普通、白天、按难度或按方块抗爆性恢复。 |
+| `[preferences]` | 控制方块实体数据、下落方块、音效、粒子及药水触发等行为。 |
+| `[whitelist]` | 开启后只恢复列出的方块；开关是 `[preferences]` 中的 `enable_whitelist`。 |
+| `[replace_map]` | 指定恢复时用哪种方块替代原方块。 |
 
-This server and client side, customizable mod allows the world to automatically heal Creeper explosions. It has support for configuring a custom block-replace list, for telling the mod what blocks to use to replace a previously broken one, allowing for balancing and preventing potential abuse of this mod.
+恢复模式的配置值依次为 `default_mode`、`daytime_healing_mode`、`difficulty_based_healing_mode` 和 `blast_resistance_based_healing_mode`。抗爆性模式包含随机延迟，方块可能成批恢复。
 
-## Features
+## 此移植版的行为
 
-### Explosion healing modes
+- 普通模式按方块依次等待和恢复。重启后保留已保存的模式专用方块延迟。
+- 白天模式在首次恢复前若所有受影响位置都没有光，会继续等待并定期检查光照；上游版本会在这时结束该任务。
+- 暂时无法放置的方块会留在待恢复任务中，之后继续重试，没有固定次数上限。若玩家先在原位置建造，之后又拆除，新方块可能被旧任务的方块取代。目前没有取消单个待恢复任务的游戏内命令。关闭某类爆炸的恢复只影响此后发生的爆炸。
+- 待恢复任务会在正常停服时保存，运行中也会定期保存进度；异常退出仍可能丢失最近一次成功保存后的进度。
 
-Special modes that customize the way explosions are healed even further:
+这些行为与[上游基线提交 `4fcf0a0`](https://github.com/ArkoSammy12/creeper-healing/commit/4fcf0a002218dd6d2080f6c1c413a81c537897c1)有差异。完整版本记录见 [CHANGELOG.md](CHANGELOG.md)。
 
- - **Daytime Healing Mode**: Makes explosions wait until sunrise to begin healing. When they do, they will need a source of light to be able to heal.
- - **Difficulty-based Healing Mode**: Speeds up or slows down the healing of explosions depending on the difficulty of the world or server.
- - **Blast-resistance based Healing Mode**: Blocks with a higher blast resistance will take longer to heal. Their delays will also receive a randomized offset, causing blocks to heal in bursts.
- 
-Blocks will be healed during the explosion healing process. A block may be healed at a position if a player would also be able to place a block at that position.
+## 构建与反馈
 
-### Different explosion sources
+安装 Java 25 并设置 `JAVA_HOME` 后，在仓库根目录运行 `./gradlew build`；Windows PowerShell 可运行 `./gradlew.bat build`。普通构建产物位于 `build/libs/`。移植版问题请提交到[本仓库的 Issues](https://github.com/Sylvan-Cheng/creeper-healing-sylvan/issues)，上游项目的问题请提交到上游仓库。
 
-This mod also supports the healing of different types of explosion sources, such as mobs, TNT and blocks such as beds and end crystal blocks.
-You can also configure a blacklist for mob explosion sources that should not be healed.
-
-### Make explosions not drop items
-
-You can individually configure whether explosions coming from different sources should drop their items. By default, all explosion source types except mob explosions are **not** allowed to drop their items, but you can configure these settings individually via the config file or via commands.
-There is also a blacklist for mob explosion sources that should not drop items when exploding.
-
-### Configurable delays
-
-Configure the amount of time it takes for an explosion to start healing, and the amount of time between each block placement.
-Keep in mind that some explosion modes will use their own values for the explosion heal and block placement delays.
-
-- **Warning**: Both delays have a minimum value of 0.05 seconds. Attempting to force a lower value by setting it manually in the config will make the mod use the default values instead.
-
-### Restore the NBT data of block entities
-
-Toggle the restoration of block NBT data when healing the block. You can also optionally force this block to always heal to guarantee the original block along with its nbt data is always healed
-
-### Make falling blocks not fall
-
-You can make blocks such as sand and gravel remain in place when healed. These will only fall when receiving a neighbor update.
-
-### Whitelist
-
-You can configure an optional whitelist that allows you to specify the blocks that are allowed to heal in an explosion. To do this, you can open the mod's configuration file, and find the following section:
-
-```toml
-#Use an optional whitelist to customize which blocks are allowed to heal. To add an entry, specify the block's namespace
-#along with its identifier, separated by a colon, and add it in-between the square brackets below. Separate each entry with a comma.
-#Example entries:
-#whitelist_entries = ["minecraft:grass",  "minecraft:stone", "minecraft:sand"]
-[whitelist]
-	whitelist_entries = ["minecraft:placeholder"]
-```
-
-To add entries to the whitelist, you can add a string containing the block's namespace and identifier separated by a colon to the array, like shown in the example above. Separate each entry with a comma.
-You can also find a preference setting named "enable_whitelist" to enable or disable the usage of the whitelist. 
-
-### Replace map
-
-In the mod's config file, you can customize a "replace map". This is used if you would like a certain block to be healed with another one, instead of using the same block. If a block is healed with another one, the properties of the original block will be carried over to the new block, preserving properties like the block's orientation. 
-
-To add entries to the replace map, you can open the configuration file (located in your config folder and named `creeper-healing.toml`), scroll down and add entries below the `[replace_map]` section, using the following format, and separating each entry by skipping a line:
-
-```toml
-"minecraft:name_of_old_block" = "minecraft:name_of_new_block"
-```
-
-By default, the mod includes the following entry in the replace map:
-
-```toml
-"minecraft:diamond_block" = "minecraft:stone"
-```
-
-- **Warning**: Do not set the same block to be replaced with multiple blocks, as this will cause a crash upon game startup. That is, do not use the same key twice or more in the replace map.
-
-### Extra settings
-
-You can also find settings to toggle extra features, such as:
-
- - Enable or disable the block placement sound effect when a block is healed.
- - Heal explosions faster via splash potions of Healing or Regeneration.
-
-### Commands
-
-All of the mod's settings can also be modified in-game via commands. Access them via `/creeper-healing config`. The config file can be reloaded in-game via `/creeper-healing config reload` to avoid restarting the server or world. Note that all commands require operator permission.
-
-## Configuration  File
-When the server or game is started, the mod will look for an existing `creeper-healing.toml` file for the config folder of your game. If it exists, it will read the values from there. If not, it will create a new config file in `/config/creeper-healing.toml`. You can then edit this file to configure the mod, and restart the server or game to apply the changes, or use the `/creeper-healing config reload` in-game command.
-
-The following is the default configuration file generated upon first mod initialization or whenever the mod fails to find the config file during server or world shutdown.
-
-```toml
-#Configure the delays related to the healing of explosions.
-[delays]
-	#(Default = 3.0) How much time in seconds should an explosion wait for to begin healing.
-	explosion_heal_delay = 3.0
-	#(Default = 1.0) The time in seconds that a block takes to heal.
-	block_placement_delay = 1.0
-
-#Toggle whether certain explosion should drop items. Does not include items stored in container blocks.
-[explosion_item_drops]
-	#(Default = false) Whether to drop items on explosions caused by mobs such as Creepers.
-	drop_items_on_mob_explosions = false
-	#(Default = true) Whether to drop items on explosions caused by blocks such as beds or end crystal blocks.
-	drop_items_on_block_explosions = true
-	#(Default = true) Whether to drop items on explosions caused by TNT blocks and TNT minecarts.
-	drop_items_on_tnt_explosions = true
-	#(Default = true) Whether to drop items on explosions such as those caused by wind bursts.
-	drop_items_on_triggered_explosions = true
-	#(Default = true) Whether to drop items on explosions whose source is not any of the ones provided in this setting category.
-	drop_items_on_other_explosions = true
-	#Add mob identifiers to this blacklist to prevent explosions caused by the added mobs from dropping items if drop_items_on_mob_explosions is enabled.
-	drop_items_on_mob_explosions_blacklist = ["minecraft:placeholder"]
-
-#Configure which explosions are allowed to heal.
-[explosion_sources]
-	#(Default = true) Heal explosions caused by mobs such as Creepers.
-	heal_mob_explosions = true
-	#(Default = false) Heal explosions caused by blocks such as beds or end crystal blocks.
-	heal_block_explosions = false
-	#(Default = false) Heal explosions caused by TNT blocks and TNT minecarts.
-	heal_tnt_explosions = false
-	#(Default = false) Heal explosions such as those caused by wind bursts.
-	heal_triggered_explosions = false
-	#(Default = false) Heal explosions caused by sources which aren't any of the ones provided in this setting category.
-	heal_other_explosions = false
-	#Add mob identifiers to this blacklist to prevent explosions caused by the added mobs from healing if heal_mob_explosions is enabled.
-	heal_mob_explosions_blacklist = ["minecraft:placeholder"]
-
-#Choose between different special modes for explosion healing. Note that certain healing modes will not follow the explosion delay and block delay settings.
-[explosion_healing_mode]
-	#(Default = "default_mode") Choose any of the following healing modes by copying one of the strings and pasting it into the value of the "mode" setting below:
-	#"default_mode", "daytime_healing_mode", "difficulty_based_healing_mode", "blast_resistance_based_healing_mode"
-	mode = "DEFAULT_MODE"
-
-#Toggleable settings for extra features.
-[preferences]
-	#(Default = false) Whether to restore block nbt data upon healing. This option prevents container blocks like chests from dropping their inventories. Does not apply when the healed block is different from the destroyed block due to a replace map entry.
-	restore_block_nbt = false
-	#(Default = false) Whether to force blocks with nbt data to always heal, even if the replace map specifies a replacement for that block, and regardless of the block that may be occupying that position at the moment of healing.
-	force_blocks_with_nbt_to_always_heal = false
-	#(Default = true) Allows for a falling block, like sand or gravel, to fall when healed. Disabling this option makes the falling block have to receive a neighbor update before falling.
-	make_falling_blocks_fall = true
-	#(Default = true) Whether a block placement sound effect should be played when a block is healed.
-	block_placement_sound_effect = true
-	#(Default = true) Whether a block placement sound effect should produce some cloud particles.
-	block_placement_particles = true
-	#(Default = true) Makes explosion heal immediately when a potion of Healing is thrown on them.
-	heal_on_healing_potion_splash = true
-	#(Default = true) Makes explosions begin their healing process when a potion of Regeneration is thrown on them.
-	heal_on_regeneration_potion_splash = true
-	#(Default = false) Toggle the usage of the whitelist.
-	enable_whitelist = false
-
-#Use an optional whitelist to customize which blocks are allowed to heal. To add an entry, specify the block's namespace
-#along with its identifier, separated by a colon and enclosed in double quotes, and add it in-between the square brackets below. Separate each entry with a comma.
-#Example entries:
-#whitelist_entries = ["minecraft:grass",  "minecraft:stone", "minecraft:sand"]
-[whitelist]
-	whitelist = ["minecraft:placeholder"]
-
-#Add your own replace entries to configure which blocks should be used to heal other blocks. The block on the right will be used to heal the block on the left.
-#Specify the block's namespace along with the block's name identifier, separated by a colon and enclosed in double quotes.
-#Example entry:
-#"minecraft:gold_block" = "minecraft:stone"
-#Warning, the same key cannot appear more than once in the replace map! For example, the following will cause an error:
-#"minecraft:diamond_block" = "minecraft:stone"
-#"minecraft:diamond_block" = "minecraft:air" 
-[replace_map]
-	"minecraft:diamond_block" = "minecraft:stone"
-
-```
-
-## Support
-
-If you would like to report a bug, or make a suggestion, you can do so via the mod's [issue tracker](https://github.com/ArkoSammy12/creeper-healing/issues).
-
-## Building
-
-Clone this repository on your PC, then open your command line prompt on the main directory of the mod, and run the command: `gradlew build`. Once the build is successful, you can find the mod under `/creeper-healing/build/libs`. Use the .jar file without the `"sources"`.
-
-## Credits
-
-- Thanks to [Kioku](https://github.com/takoyakioku) for the mod's icon.
-- Thanks to @sulpherstaer for giving me the idea and inspiration for making this mod.
-- Thansk to @_jacg on the Fabric Discord server helping me out with setting up the custom config file.
-- Thanks to @dale8699 for helping me improve and give me ideas for the mod.
+本移植版以 [LGPL-3.0-only](LICENSE) 发布；相关 GPL 条款见 [COPYING.GPLv3](COPYING.GPLv3)。项目包含按 [MIT 许可](MONKEY-UTILS-LICENSE)改编的 Monkey Utils 源码。原模组作者为 [ArkoSammy12](https://github.com/ArkoSammy12)，模组图标由 [Kioku](https://github.com/takoyakioku) 制作。
