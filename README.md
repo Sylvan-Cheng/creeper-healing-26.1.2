@@ -8,6 +8,14 @@ The development setup can be opened with `D:\Codes\Minecraft\Open-Fabric-VSCode.
 
 This unofficial port is distributed under `LGPL-3.0-only`, with the LGPL 3 terms in `LICENSE` and the GPL 3 terms incorporated by reference in `COPYING.GPLv3`. It includes adapted Monkey Utils source under `src/main/kotlin`; its MIT notice is retained in `MONKEY-UTILS-LICENSE`. The original project and author are credited above, and this port is not an official upstream release.
 
+### Behavior differences from upstream 2.1.4
+
+This port is based on upstream commit [`4fcf0a0`](https://github.com/ArkoSammy12/creeper-healing/commit/4fcf0a002218dd6d2080f6c1c413a81c537897c1). In the normal mode, blocks still wait for their own delay and heal in sequence. The blast-resistance mode's randomized delays can intentionally produce bursts.
+
+- In daytime mode, if every affected position is unlit when the first block is due to heal, the task waits and checks for light about every 21 server ticks. Upstream ends the task at that point. Once the first block has healed, later blocks are not gated by light.
+- A block that cannot be restored remains pending and is retried without a fixed limit. With multiple blocks, a failed placement attempt can move that block to the back of the queue. Upstream can skip or finish a blocked block instead. If a player builds at an affected position and later removes that construction, the old block may then be restored. There is currently no in-game command to cancel an individual pending task. Disabling healing for an explosion source only affects new explosions.
+- Pending tasks are saved on normal shutdown. While the server is running, this port also attempts to save new tasks promptly, healing progress within 200 server ticks, and active waiting tasks every 1200 server ticks. An unexpected shutdown can still lose progress since the last successful save. Unlike upstream, restarting alone does not replace saved mode-specific block delays with the ordinary configured delay.
+
 Install the non-sources JAR from a release in the `mods` folder of Minecraft 26.1.2 with Fabric Loader 0.19.5, Fabric API 0.155.3+26.1.2, and Fabric Language Kotlin 1.14.1+kotlin.2.4.20. Back up existing worlds and configuration files before replacing a previous version. The mod creates `config/creeper-healing.toml` on first run.
 
 This server and client side, customizable mod allows the world to automatically heal Creeper explosions. It has support for configuring a custom block-replace list, for telling the mod what blocks to use to replace a previously broken one, allowing for balancing and preventing potential abuse of this mod.

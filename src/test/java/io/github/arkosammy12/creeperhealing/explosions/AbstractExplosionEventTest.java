@@ -69,20 +69,52 @@ class AbstractExplosionEventTest {
     }
 
     @Test
-    void daylightWaitDoesNotReportHealingProgress() {
+    void lightGateKeepsTaskUntilLightReturns() {
         TestBlock block = new TestBlock(130, false);
+        boolean[] lightAvailable = {false};
         TestExplosionEvent event = new TestExplosionEvent(block) {
             @Override
             protected boolean canHealNow(Level world) {
-                this.healTimer = 20;
-                return false;
+                if (!lightAvailable[0]) {
+                    this.healTimer = 20;
+                }
+                return lightAvailable[0];
             }
         };
 
         for (int tick = 0; tick < 250; tick++) {
             assertEquals(ExplosionEvent.TickResult.WAITING, event.tickAndReport(null));
+            assertFalse(event.isFinished());
         }
         assertEquals(130, block.getBlockTimer());
+
+        lightAvailable[0] = true;
+        for (int tick = 0; tick < 152 && !block.isPlaced(); tick++) {
+            event.tick(null);
+        }
+        assertTrue(block.isPlaced());
+    }
+
+    @Test
+    void blockedFinalBlockRemainsPendingAndCanHealLater() {
+        TestBlock block = new TestBlock(0, true);
+        TestExplosionEvent event = new TestExplosionEvent(block);
+
+        for (int tick = 0; tick < 100; tick++) {
+            event.tick(null);
+        }
+        assertFalse(event.isFinished());
+        assertFalse(block.isPlaced());
+        assertEquals(0, event.getBlockCounter());
+        assertTrue(block.attempts >= 4);
+
+        block.blocked = false;
+        for (int tick = 0; tick < 21 && !block.isPlaced(); tick++) {
+            event.tick(null);
+        }
+        assertTrue(block.isPlaced());
+        event.tick(null);
+        assertTrue(event.isFinished());
     }
 
     private static class TestExplosionEvent extends AbstractExplosionEvent {
@@ -108,7 +140,7 @@ class AbstractExplosionEventTest {
     private static final class TestBlock implements AffectedBlock {
         private long timer;
         private boolean placed;
-        private final boolean blocked;
+        private boolean blocked;
         private int attempts;
 
         TestBlock(long timer, boolean blocked) {
