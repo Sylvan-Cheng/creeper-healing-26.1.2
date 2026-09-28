@@ -1,8 +1,8 @@
 # Changes in the unofficial 26.1.2 port
 
-## Unreleased
+## 2.1.4+26.1.2-unofficial.2
 
-Based on upstream Creeper Healing 2.1.4 (commit [`4fcf0a0`](https://github.com/ArkoSammy12/creeper-healing/commit/4fcf0a002218dd6d2080f6c1c413a81c537897c1)). These changes are not in the existing `v2.1.4+26.1.2-unofficial` prerelease.
+Based on upstream Creeper Healing 2.1.4 (commit [`4fcf0a0`](https://github.com/ArkoSammy12/creeper-healing/commit/4fcf0a002218dd6d2080f6c1c413a81c537897c1)). This release follows `v2.1.4+26.1.2-unofficial`.
 
 - Rename the port's mod ID from `creeperhealing_2612` to `creeperhealing_sylvan` and its display name to "Creeper Healing: Sylvan Edition (Unofficial)". Remove the old JAR before updating so two copies do not handle the same explosions. Existing `scheduled-explosions.json` world saves and `config/creeper-healing.toml` retain their paths.
 
