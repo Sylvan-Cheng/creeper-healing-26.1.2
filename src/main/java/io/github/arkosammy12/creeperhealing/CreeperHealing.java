@@ -27,7 +27,7 @@ import java.util.List;
 
 public class CreeperHealing implements ModInitializer {
 
-    public static final String MOD_ID = "creeperhealing_2612";
+    public static final String MOD_ID = "creeperhealing_sylvan";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
     public static final DefaultExplosionManager EXPLOSION_MANAGER = new DefaultExplosionManager(DefaultSerializedExplosion.CODEC);
     public static final ConfigManager CONFIG_MANAGER = ConfigManagerBuilderKt.tomlConfigManager("creeper-healing", FabricLoader.getInstance().getConfigDir().resolve("creeper-healing.toml"), (manager) -> {

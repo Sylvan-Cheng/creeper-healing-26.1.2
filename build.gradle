@@ -29,7 +29,7 @@ loom {
     splitEnvironmentSourceSets()
 
 	mods {
-		"creeperhealing_2612" {
+		"creeperhealing_sylvan" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
@@ -41,7 +41,7 @@ loom {
 			name "Data Generation"
 			vmArg "-Dfabric-api.datagen"
 			vmArg "-Dfabric-api.datagen.output-dir=${file("src/main/generated")}"
-			vmArg "-Dfabric-api.datagen.modid=creeperhealing_2612"
+			vmArg "-Dfabric-api.datagen.modid=creeperhealing_sylvan"
  
 			runDir "build/datagen"
 		}

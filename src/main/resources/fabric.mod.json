@@ -1,8 +1,8 @@
 {
 	"schemaVersion": 1,
-	"id": "creeperhealing_2612",
+	"id": "creeperhealing_sylvan",
 	"version": "${version}",
-	"name": "Creeper Healing (Unofficial 26.1.2 Port)",
+	"name": "Creeper Healing: Sylvan Edition (Unofficial)",
 	"description": "A server side, customizable Fabric mod to automatically and naturally heal Creeper explosions (and other types of explosions!).",
 	"authors": [
 		"ArkoSammy12"
