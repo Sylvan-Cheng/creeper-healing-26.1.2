@@ -35,6 +35,8 @@ import net.minecraft.world.level.block.state.BlockState;
 @Mixin(ServerExplosion.class)
 public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck {
 
+    @Unique private static final int MAX_INDIRECT_BLOCKS = 4096;
+
     @Shadow public abstract @Nullable Entity getDirectSourceEntity();
 
     @Shadow @Nullable public abstract LivingEntity getIndirectSourceEntity();
@@ -101,6 +103,10 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
             return original;
         }
         this.vanillaAffectedPositions.addAll(ExplosionUtils.filterPositionsToHeal(original, (pos) -> this.level().getBlockState(pos)));
+        if (!this.creeperhealing$shouldHeal()) {
+            this.vanillaAffectedPositions.clear();
+            return original;
+        }
         this.checkForIndirectlyAffectedPositions();
         for (BlockPos pos : this.vanillaAffectedPositions) {
             this.affectedStatesAndBlockEntities.put(pos, new Tuple<>(this.level().getBlockState(pos), this.level().getBlockEntity(pos)));
@@ -121,22 +127,35 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
 
         Level world = this.level();
         if ((!(world instanceof ServerLevel serverWorld)) || !this.creeperhealing$shouldHeal()) {
-            this.vanillaAffectedPositions.clear();
-            this.affectedStatesAndBlockEntities.clear();
-            this.indirectlyAffectedPositions.clear();
-            original.call(positions);
-            ExplosionUtils.DROP_BLOCK_ITEMS.set(true);
-            ExplosionUtils.DROP_CONTAINER_INVENTORY_ITEMS.set(true);
+            try {
+                original.call(positions);
+            } finally {
+                this.vanillaAffectedPositions.clear();
+                this.affectedStatesAndBlockEntities.clear();
+                this.indirectlyAffectedPositions.clear();
+                ExplosionUtils.DROP_BLOCK_ITEMS.set(true);
+                ExplosionUtils.DROP_CONTAINER_INVENTORY_ITEMS.set(true);
+            }
             return;
         }
 
         ((ServerWorldDuck) serverWorld).creeperhealing$addAffectedPositions(vanillaAffectedPositions);
         ((ServerWorldDuck) serverWorld).creeperhealing$addAffectedPositions(indirectlyAffectedPositions);
+        try {
+            original.call(positions);
+            this.finishExplosion(serverWorld);
+        } finally {
+            ((ServerWorldDuck) serverWorld).creeperhealing$clearAffectedPositions();
+            ExplosionUtils.DROP_BLOCK_ITEMS.set(true);
+            ExplosionUtils.DROP_CONTAINER_INVENTORY_ITEMS.set(true);
+            this.vanillaAffectedPositions.clear();
+            this.affectedStatesAndBlockEntities.clear();
+            this.indirectlyAffectedPositions.clear();
+        }
+    }
 
-        original.call(positions);
-
-        ((ServerWorldDuck) serverWorld).creeperhealing$clearAffectedPositions();
-
+    @Unique
+    private void finishExplosion(ServerLevel serverWorld) {
         // Filter out indirectly affected positions whose corresponding state did not change before and after the explosion.
         // Filter out entries in the affected states and block entities map with block position keys not in the affected positions.
         // Emit an ExplosionContext object for ExplosionManagers to receive.
@@ -159,7 +178,7 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
                 filteredIndirectlyAffectedPositions.add(pos);
             }
         }
-        List<BlockPos> filteredAffectedPositions = new ArrayList<>();
+        Set<BlockPos> filteredAffectedPositions = new HashSet<>();
         for (BlockPos pos : this.vanillaAffectedPositions) {
             Tuple<BlockState, BlockEntity> pair = this.affectedStatesAndBlockEntities.get(pos);
             if (pair == null) {
@@ -172,24 +191,22 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
             }
             filteredAffectedPositions.add(pos);
         }
+        Set<BlockPos> filteredIndirectPositions = new HashSet<>(filteredIndirectlyAffectedPositions);
         Map<BlockPos, Tuple<BlockState, BlockEntity>> filteredSavedStatesAndBlockEntities = new HashMap<>();
         for (Map.Entry<BlockPos, Tuple<BlockState, BlockEntity>> entry : this.affectedStatesAndBlockEntities.entrySet()) {
             BlockPos entryPos = entry.getKey();
-            if (filteredAffectedPositions.contains(entryPos) || filteredIndirectlyAffectedPositions.contains(entryPos)) {
+            if (filteredAffectedPositions.contains(entryPos) || filteredIndirectPositions.contains(entryPos)) {
                 filteredSavedStatesAndBlockEntities.put(entryPos, entry.getValue());
             }
         }
         ExplosionContext explosionContext = new ExplosionContext(
-                filteredAffectedPositions,
+                new ArrayList<>(filteredAffectedPositions),
                 filteredIndirectlyAffectedPositions,
                 filteredSavedStatesAndBlockEntities,
                 serverWorld,
                 this.explosionSourceType
         );
         ExplosionManagerRegistrar.getInstance().emitExplosionContext(DefaultExplosionManager.ID, explosionContext);
-        this.vanillaAffectedPositions.clear();
-        this.affectedStatesAndBlockEntities.clear();
-        this.indirectlyAffectedPositions.clear();
 
     }
 
@@ -225,6 +242,9 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
         EmptyWorld emptyWorld = new EmptyWorld(this.level());
         Set<BlockPos> newPositions = new HashSet<>();
         for (BlockPos filteredPosition : edgeAffectedPositions) {
+            if (newPositions.size() >= MAX_INDIRECT_BLOCKS) {
+                break;
+            }
             checkNeighbors(512, filteredPosition, newPositions, emptyWorld);
         }
         this.indirectlyAffectedPositions.addAll(ExplosionUtils.filterPositionsToHeal(newPositions, (pos) -> this.level().getBlockState(pos)));
@@ -236,6 +256,9 @@ public abstract class ExplosionImplMixin implements Explosion, ExplosionImplDuck
             return;
         }
         for (Direction neighborDirection : Direction.values()) {
+            if (newPositions.size() >= MAX_INDIRECT_BLOCKS) {
+                return;
+            }
             BlockPos neighborPos = currentPosition.relative(neighborDirection);
             BlockState neighborState = this.level().getBlockState(neighborPos);
 

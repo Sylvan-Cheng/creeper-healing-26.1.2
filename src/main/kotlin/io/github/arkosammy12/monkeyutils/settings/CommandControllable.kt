@@ -30,7 +30,7 @@ interface CommandControllable<out V : Any, A : ArgumentType<*>> {
     val onValueSetCallback: (CommandContext<out ServerCommandSource>, ConfigManager) -> Int
         get() = get@{ ctx, configManager ->
             try {
-                val setting: Setting<V, *> = configManager.getSetting<V, Setting<V, *>>(this.commandPath) ?: return@get Command.SINGLE_SUCCESS.also {
+                val setting: Setting<V, *> = configManager.getSetting<V, Setting<V, *>>(this.commandPath) ?: return@get 0.also {
                     ctx.source.sendSystemMessage(Text.literal("Config setting \"${this.commandPath.asList.last()}\" was not found!").withStyle(Formatting.RED))
                 }
                 val newValue: V = this.getArgumentValue(ctx, this.commandPath.asList.last())
@@ -39,7 +39,7 @@ interface CommandControllable<out V : Any, A : ArgumentType<*>> {
                 return@get Command.SINGLE_SUCCESS
             } catch (e: Exception) {
                 ctx.source.sendSystemMessage(Text.literal("Error attempting to set value for ${this.commandPath.asList.last()}: ${e.message}"))
-                return@get Command.SINGLE_SUCCESS
+                return@get 0
             }
             return@get Command.SINGLE_SUCCESS
         }

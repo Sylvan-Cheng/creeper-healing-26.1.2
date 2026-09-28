@@ -12,8 +12,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import io.github.arkosammy12.creeperhealing.explosions.ducks.ExplosionImplDuck;
 import io.github.arkosammy12.creeperhealing.util.callbacks.DaylightCycleEvents;
 
-import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BooleanSupplier;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
@@ -29,7 +30,7 @@ import net.minecraft.world.phys.Vec3;
 public abstract class ServerWorldMixin implements ServerWorldDuck {
 
     @Unique
-    private final Collection<BlockPos> affectedBlockPositions = new ArrayList<>();
+    private final Set<BlockPos> affectedBlockPositions = new HashSet<>();
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/clock/ServerClockManager;moveToTimeMarker(Lnet/minecraft/core/Holder;Lnet/minecraft/resources/ResourceKey;)Z", shift = At.Shift.AFTER))
     private void fastForwardDaytimeHealingModeExplosionsOnNightSkipped(BooleanSupplier shouldKeepTicking, CallbackInfo ci) {

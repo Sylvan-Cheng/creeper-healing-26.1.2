@@ -11,7 +11,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.FallingBlock;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BedPart;
@@ -80,24 +80,17 @@ public class DoubleAffectedBlock extends SingleAffectedBlock {
     }
 
     @Override
-    protected boolean shouldHealBlock(Level world) {
-        return world.getBlockState(this.getBlockPos()).canBeReplaced() && world.getBlockState(this.secondHalfPos).canBeReplaced();
-    }
-
-    @Override
     protected boolean shouldForceHeal() {
         boolean forceBlocksWithNbtToAlwaysHeal = ConfigUtils.getRawBooleanSetting(ConfigUtils.FORCE_BLOCKS_WITH_NBT_TO_ALWAYS_HEAL);
-        return this.getNbt() != null && this.getSecondHalfNbt() != null && forceBlocksWithNbtToAlwaysHeal;
+        return (this.getNbt() != null || this.getSecondHalfNbt() != null) && forceBlocksWithNbtToAlwaysHeal;
     }
 
     @Override
-    public void tryHealing(MinecraftServer server, ExplosionEvent currentExplosionEvent) {
+    protected boolean tryHealing(MinecraftServer server, ExplosionEvent currentExplosionEvent) {
         if (this.secondHalfState == null) {
-            super.tryHealing(server, currentExplosionEvent);
-            return;
+            return super.tryHealing(server, currentExplosionEvent);
         }
 
-        this.setPlaced();
         BlockState firstHalfState = this.getBlockState();
         BlockPos firstHalfPos = this.getBlockPos();
         BlockState secondHalfState = this.secondHalfState;
@@ -110,33 +103,42 @@ public class DoubleAffectedBlock extends SingleAffectedBlock {
         Setting<String, ?> replaceMapValue = replaceMapSection.get(blockIdentifier);
         // Hardcode an exception to allow beds to be replaced with other blocks despite them having an Nbt tag.
         if (replaceMapValue != null && (!this.shouldForceHeal() || firstHalfState.is(BlockTags.BEDS))) {
-            firstHalfState = BuiltInRegistries.BLOCK.getValue(Identifier.parse(replaceMapValue.getValue().getRaw())).withPropertiesOf(firstHalfState);
-            secondHalfState = BuiltInRegistries.BLOCK.getValue(Identifier.parse(replaceMapValue.getValue().getRaw())).withPropertiesOf(secondHalfState);
-            stateReplaced = true;
+            try {
+                Identifier replacementId = Identifier.parse(replaceMapValue.getValue().getRaw());
+                if (!BuiltInRegistries.BLOCK.containsKey(replacementId)) {
+                    throw new IllegalArgumentException("Unknown block: " + replacementId);
+                }
+                Block replacement = BuiltInRegistries.BLOCK.getValue(replacementId);
+                if (replacement != null) {
+                    firstHalfState = replacement.withPropertiesOf(firstHalfState);
+                    secondHalfState = replacement.withPropertiesOf(secondHalfState);
+                    stateReplaced = true;
+                }
+            } catch (RuntimeException e) {
+                io.github.arkosammy12.creeperhealing.CreeperHealing.LOGGER.warn("Invalid replacement for {}: {}", blockIdentifier, replaceMapValue.getValue().getRaw(), e);
+            }
         }
 
 
         // Prevent both halves of a double block from being replaced with two of a single regular block
         if (!firstHalfState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF) && !firstHalfState.hasProperty(BlockStateProperties.BED_PART)) {
-            super.tryHealing(server, currentExplosionEvent);
-            return;
+            return super.tryHealing(server, currentExplosionEvent);
         }
 
-        if (!this.shouldHealBlock(world)) {
-            return;
+        if (!this.shouldForceHeal() && (!canRestoreAt(world, firstHalfPos, firstHalfState) || !canRestoreAt(world, secondHalfPos, secondHalfState))) {
+            return false;
         }
 
         ExplosionUtils.pushEntitiesUpwards(world, firstHalfPos, firstHalfState, firstHalfState.hasProperty(BlockStateProperties.DOUBLE_BLOCK_HALF));
-        boolean makeFallingBlocksFall = ConfigUtils.getRawBooleanSetting(ConfigUtils.MAKE_FALLING_BLOCKS_FALL);
-        if (firstHalfState.getBlock() instanceof FallingBlock) {
-            ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.set(makeFallingBlocksFall);
+        if (!firstHalfState.equals(world.getBlockState(firstHalfPos)) && !ExplosionUtils.placeRestoredBlock(world, firstHalfPos, firstHalfState)) {
+            return false;
         }
-        if (secondHalfState.getBlock() instanceof FallingBlock) {
-            ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.set(makeFallingBlocksFall);
+        if (!secondHalfState.equals(world.getBlockState(secondHalfPos)) && !ExplosionUtils.placeRestoredBlock(world, secondHalfPos, secondHalfState)) {
+            return false;
         }
-
-        world.setBlockAndUpdate(firstHalfPos, firstHalfState);
-        world.setBlockAndUpdate(secondHalfPos, secondHalfState);
+        if (!firstHalfState.equals(world.getBlockState(firstHalfPos)) || !secondHalfState.equals(world.getBlockState(secondHalfPos))) {
+            return false;
+        }
 
         boolean healFirstHalfNbt = this.getNbt() != null && !stateReplaced;
         if (healFirstHalfNbt) {
@@ -148,6 +150,12 @@ public class DoubleAffectedBlock extends SingleAffectedBlock {
         }
         ExplosionUtils.playBlockPlacementSoundEffect(world, firstHalfPos, firstHalfState);
         ExplosionUtils.spawnParticles(world, firstHalfPos);
+        return true;
+    }
+
+    private static boolean canRestoreAt(Level world, BlockPos pos, BlockState state) {
+        BlockState current = world.getBlockState(pos);
+        return current.canBeReplaced() || current.equals(state);
     }
 
     @Override

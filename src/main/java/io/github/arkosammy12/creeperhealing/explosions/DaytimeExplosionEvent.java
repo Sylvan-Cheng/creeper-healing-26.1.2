@@ -43,9 +43,9 @@ public class DaytimeExplosionEvent extends AbstractExplosionEvent {
     }
 
     @Override
-    public void updateFinishedStatus(Level world) {
+    protected boolean canHealNow(Level world) {
         if (this.getBlockCounter() > 0) {
-            return;
+            return true;
         }
         MinecraftServer server = world.getServer();
         boolean sufficientLight = this.getAffectedBlocks().anyMatch(affectedBlock -> {
@@ -54,8 +54,9 @@ public class DaytimeExplosionEvent extends AbstractExplosionEvent {
             return blockWorld.getBrightness(LightLayer.BLOCK, pos) > 0 || blockWorld.getBrightness(LightLayer.SKY, pos) > 0;
         });
         if (!sufficientLight) {
-            this.finished = true;
+            this.healTimer = 20;
         }
+        return sufficientLight;
     }
 
 }

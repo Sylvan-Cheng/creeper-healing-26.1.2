@@ -72,7 +72,13 @@ dependencies {
 	include(implementation('me.lucko:fabric-permissions-api:0.7.0'))
 
 	implementation("net.fabricmc:fabric-language-kotlin:${property("fabric_kotlin_version")}")
+	testImplementation 'org.junit.jupiter:junit-jupiter:5.11.4'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
+}
+
+test {
+	useJUnitPlatform()
 }
 
 processResources {

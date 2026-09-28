@@ -8,7 +8,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import io.github.arkosammy12.creeperhealing.blocks.AffectedBlock;
 import io.github.arkosammy12.creeperhealing.config.ConfigUtils;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -19,6 +18,7 @@ public abstract class AbstractExplosionEvent implements ExplosionEvent {
     protected long healTimer;
     private int blockCounter;
     protected boolean finished;
+    private boolean healingStarted;
     private final int radius;
     private final BlockPos center;
 
@@ -78,70 +78,52 @@ public abstract class AbstractExplosionEvent implements ExplosionEvent {
         this.healTimer = timer;
     }
 
-    protected void updateFinishedStatus(Level world) {
+    protected boolean canHealNow(Level world) {
+        return true;
     }
 
     abstract protected ExplosionHealingMode getHealingMode();
 
     @Override
     public final void tick(MinecraftServer server) {
+        this.tickAndReport(server);
+    }
+
+    @Override
+    public final TickResult tickAndReport(MinecraftServer server) {
         if (this.isFinished()) {
-            return;
+            return TickResult.WAITING;
         }
         this.healTimer--;
         if (healTimer >= 0) {
-            return;
+            return TickResult.WAITING;
         }
         Optional<AffectedBlock> optionalAffectedBlock = this.getCurrentAffectedBlock();
         if (optionalAffectedBlock.isEmpty()) {
             this.finished = true;
-            return;
+            return TickResult.WAITING;
         }
         AffectedBlock currentAffectedBlock = optionalAffectedBlock.get();
         if (currentAffectedBlock.isPlaced()) {
             this.incrementCounter();
-            return;
+            return TickResult.BLOCK_PLACED;
         }
-        if (!currentAffectedBlock.canBePlaced(server)) {
-            this.delayAffectedBlock(currentAffectedBlock, server);
-            return;
+        if (!this.canHealNow(this.getWorld(server))) {
+            return TickResult.WAITING;
         }
-        this.updateFinishedStatus(this.getWorld(server));
-        if (this.isFinished()) {
-            return;
-        }
+        boolean started = !this.healingStarted;
+        this.healingStarted = true;
+        long timerBeforeTick = currentAffectedBlock.getBlockTimer();
         currentAffectedBlock.tick(this, server);
-        if (currentAffectedBlock.getBlockTimer() < 0) {
+        if (currentAffectedBlock.isPlaced()) {
             this.incrementCounter();
+            return TickResult.BLOCK_PLACED;
+        } else if (timerBeforeTick <= 0 && this.blockCounter < this.affectedBlocks.size() - 1) {
+            this.affectedBlocks.remove(this.blockCounter);
+            this.affectedBlocks.add(currentAffectedBlock);
+            return TickResult.RETRY_SCHEDULED;
         }
-    }
-
-    // If the current affected block cannot be placed at this moment, find the next block that is placeable in the list and swap them in the list.
-    // This effectively gives the delayed block more chances to be placed until no more placeable blocks are found
-    // Examples include wall torches, vines, lanterns, candles, etc.
-    private void delayAffectedBlock(AffectedBlock affectedBlockToDelay, MinecraftServer server) {
-        int indexOfDelayedBlock = this.affectedBlocks.indexOf(affectedBlockToDelay);
-        if (indexOfDelayedBlock < 0) {
-            this.incrementCounter();
-            affectedBlockToDelay.setPlaced();
-            return;
-        }
-        int indexOfNextPlaceable = this.findNextPlaceableBlockIndex(server);
-        if (indexOfNextPlaceable >= 0) {
-            Collections.swap(this.affectedBlocks, indexOfDelayedBlock, indexOfNextPlaceable);
-        } else {
-            this.incrementCounter();
-            affectedBlockToDelay.setPlaced();
-        }
-    }
-
-    private int findNextPlaceableBlockIndex(MinecraftServer server) {
-        for (int i = this.blockCounter; i < this.affectedBlocks.size(); i++) {
-            if (this.affectedBlocks.get(i).canBePlaced(server)) {
-                return i;
-            }
-        }
-        return -1;
+        return started ? TickResult.HEALING_STARTED : TickResult.WAITING;
     }
 
     @Override

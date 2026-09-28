@@ -19,6 +19,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 
@@ -30,7 +31,28 @@ public final class ExplosionUtils {
 
     public static final ThreadLocal<Boolean> DROP_BLOCK_ITEMS = ThreadLocal.withInitial(() -> true);
     public static final ThreadLocal<Boolean> DROP_CONTAINER_INVENTORY_ITEMS = ThreadLocal.withInitial(() -> true);
-    public static final ThreadLocal<Boolean> FALLING_BLOCK_SCHEDULE_TICK = ThreadLocal.withInitial(() -> true);
+    private static final ThreadLocal<BlockPos> FALLING_BLOCK_PLACEMENT = new ThreadLocal<>();
+
+    public static boolean placeRestoredBlock(Level world, BlockPos pos, BlockState state) {
+        if (!(state.getBlock() instanceof FallingBlock) || ConfigUtils.getRawBooleanSetting(ConfigUtils.MAKE_FALLING_BLOCKS_FALL)) {
+            return world.setBlockAndUpdate(pos, state);
+        }
+        BlockPos previous = FALLING_BLOCK_PLACEMENT.get();
+        FALLING_BLOCK_PLACEMENT.set(pos);
+        try {
+            return world.setBlockAndUpdate(pos, state);
+        } finally {
+            if (previous == null) {
+                FALLING_BLOCK_PLACEMENT.remove();
+            } else {
+                FALLING_BLOCK_PLACEMENT.set(previous);
+            }
+        }
+    }
+
+    public static boolean shouldScheduleFallingBlock(BlockPos pos) {
+        return !pos.equals(FALLING_BLOCK_PLACEMENT.get());
+    }
 
     public static void pushEntitiesUpwards(Level world, BlockPos pos, BlockState state, boolean isTallBlock) {
         if (!state.isRedstoneConductor(world, pos)) {

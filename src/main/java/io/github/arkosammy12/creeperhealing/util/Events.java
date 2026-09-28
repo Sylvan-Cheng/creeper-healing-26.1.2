@@ -51,13 +51,17 @@ public final class Events {
     // Start healing DaytimeExplosionEvents when the night is skipped
     private static void onNightSkipped(ServerLevel world, BooleanSupplier shouldKeepTicking) {
         for (ExplosionEvent explosionEvent : CreeperHealing.EXPLOSION_MANAGER.getExplosionEvents().toList()) {
-            if (explosionEvent instanceof DaytimeExplosionEvent daytimeExplosionEvent) {
+            if (explosionEvent instanceof DaytimeExplosionEvent daytimeExplosionEvent && explosionEvent.getWorld(world.getServer()) == world) {
                 daytimeExplosionEvent.setHealTimer(1);
+                CreeperHealing.EXPLOSION_MANAGER.markProgressDirty();
             }
         }
     }
 
     private static void onSplashPotionHit(AbstractThrownPotion potionEntity, PotionContents potionContentsComponent, HitResult hitResult, Level world) {
+        if (!(world instanceof ServerLevel serverWorld)) {
+            return;
+        }
         Iterable<MobEffectInstance> statusEffectsIterable = potionContentsComponent.getAllEffects();
         List<MobEffectInstance> statusEffects = new ArrayList<>();
 
@@ -88,9 +92,10 @@ public final class Events {
         boolean healOnRegenerationPotion = ConfigUtils.getRawBooleanSetting(ConfigUtils.HEAL_ON_REGENERATION_POTION_SPLASH);
         if (hasInstantHealth && healOnHealingPotion) {
             for (ExplosionEvent explosionEvent : CreeperHealing.EXPLOSION_MANAGER.getExplosionEvents().toList()) {
-                boolean potionHitExplosion = explosionEvent.getAffectedBlocks().anyMatch(affectedBlock -> affectedBlock.getBlockPos().equals(potionHitPosition));
+                boolean potionHitExplosion = explosionEvent.getAffectedBlocks().anyMatch(affectedBlock -> affectedBlock.getWorldRegistryKey().equals(serverWorld.dimension()) && affectedBlock.getBlockPos().equals(potionHitPosition));
                 if (potionHitExplosion && explosionEvent instanceof AbstractExplosionEvent abstractExplosionEvent) {
                     abstractExplosionEvent.setHealTimer(1);
+                    CreeperHealing.EXPLOSION_MANAGER.markProgressDirty();
                     abstractExplosionEvent.getAffectedBlocks().forEach(affectedBlock -> {
                         if (affectedBlock instanceof SingleAffectedBlock singleAffectedBlock) {
                             singleAffectedBlock.setTimer(1);
@@ -100,9 +105,10 @@ public final class Events {
             }
         } else if (hasRegeneration && healOnRegenerationPotion) {
             for (ExplosionEvent explosionEvent : CreeperHealing.EXPLOSION_MANAGER.getExplosionEvents().toList()) {
-                boolean potionHitExplosion = explosionEvent.getAffectedBlocks().anyMatch(affectedBlock -> affectedBlock.getBlockPos().equals(potionHitPosition));
+                boolean potionHitExplosion = explosionEvent.getAffectedBlocks().anyMatch(affectedBlock -> affectedBlock.getWorldRegistryKey().equals(serverWorld.dimension()) && affectedBlock.getBlockPos().equals(potionHitPosition));
                 if (potionHitExplosion && explosionEvent instanceof AbstractExplosionEvent abstractExplosionEvent) {
                     abstractExplosionEvent.setHealTimer(1);
+                    CreeperHealing.EXPLOSION_MANAGER.markProgressDirty();
                 }
             }
         }
@@ -113,8 +119,9 @@ public final class Events {
         long dayTime = Math.floorMod(serverCommandSource.getLevel().getOverworldClockTime(), SharedConstants.TICKS_PER_GAME_DAY);
         long ticksUntilDaylight = dayTime < 12000 ? 1 : SharedConstants.TICKS_PER_GAME_DAY - dayTime;
         for (ExplosionEvent explosionEvent : CreeperHealing.EXPLOSION_MANAGER.getExplosionEvents().toList()) {
-            if (explosionEvent instanceof DaytimeExplosionEvent daytimeExplosionEvent && explosionEvent.getHealTimer() > 0) {
+            if (explosionEvent instanceof DaytimeExplosionEvent daytimeExplosionEvent && explosionEvent.getHealTimer() > 0 && explosionEvent.getWorld(serverCommandSource.getServer()) == serverCommandSource.getLevel()) {
                 daytimeExplosionEvent.setHealTimer(ticksUntilDaylight);
+                CreeperHealing.EXPLOSION_MANAGER.markProgressDirty();
             }
         }
     }

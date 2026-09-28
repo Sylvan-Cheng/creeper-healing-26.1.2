@@ -121,10 +121,11 @@ public class DefaultExplosionFactory implements ExplosionEventFactory<AbstractEx
         if (positionsToHeal.isEmpty()) {
             return null;
         }
+        Set<BlockPos> positionsToHealSet = new HashSet<>(positionsToHeal);
+        Set<BlockPos> processedPositions = new HashSet<>();
         List<AffectedBlock> affectedBlocks = new ArrayList<>();
         for (BlockPos pos : positionsToHeal) {
-
-            if (affectedBlocks.stream().anyMatch(affectedBlock -> affectedBlock.getBlockPos().equals(pos) || (affectedBlock instanceof DoubleAffectedBlock doubleAffectedBlock) && doubleAffectedBlock.getSecondHalfPos().equals(pos))) {
+            if (!processedPositions.add(pos)) {
                 continue;
             }
 
@@ -136,17 +137,15 @@ public class DefaultExplosionFactory implements ExplosionEventFactory<AbstractEx
             if (otherHalfPos == null) {
                 affectedBlock = AffectedBlock.newInstance(pos, affectedState, affectedBlockEntity, world);
             } else {
-                for (BlockPos otherPos : positionsToHeal) {
-                    if (otherPos.equals(otherHalfPos)) {
-                        BlockState secondHalfState = this.affectedStatesAndBlockEntities.get(otherPos).getA();
-                        BlockEntity secondHalfBlockEntity = this.affectedStatesAndBlockEntities.get(otherPos).getB();
-                        affectedBlock = AffectedBlock.newInstance(pos, affectedState, affectedBlockEntity, otherHalfPos, secondHalfState, secondHalfBlockEntity, world);
-                        break;
-                    }
-                }
-                if (affectedBlock == null) {
+                if (positionsToHealSet.contains(otherHalfPos)) {
+                    BlockState secondHalfState = this.affectedStatesAndBlockEntities.get(otherHalfPos).getA();
+                    BlockEntity secondHalfBlockEntity = this.affectedStatesAndBlockEntities.get(otherHalfPos).getB();
+                    affectedBlock = AffectedBlock.newInstance(pos, affectedState, affectedBlockEntity, otherHalfPos, secondHalfState, secondHalfBlockEntity, world);
+                    processedPositions.add(otherHalfPos);
+                } else {
                     affectedBlock = AffectedBlock.newInstance(pos, affectedState, affectedBlockEntity, otherHalfPos, null, null, world);
                 }
+                processedPositions.add(otherHalfPos);
             }
             affectedBlocks.add(affectedBlock);
         }

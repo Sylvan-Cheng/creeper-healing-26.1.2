@@ -1,26 +1,30 @@
 package io.github.arkosammy12.creeperhealing.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import io.github.arkosammy12.creeperhealing.util.ExcludedBlocks;
 import io.github.arkosammy12.creeperhealing.util.ExplosionUtils;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.FallingBlock;
-import net.minecraft.world.level.block.state.BlockState;
 
 @Mixin(FallingBlock.class)
 public abstract class FallingBlockMixin {
 
-    @ModifyExpressionValue(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/block/FallingBlock;isFree(Lnet/minecraft/world/level/block/state/BlockState;)Z"))
-    private boolean onBlockAttemptedFall(boolean original, BlockState blockState) {
-        // Hardcoded Exception. Place before all other logic
-        if (ExcludedBlocks.isExcluded(blockState)) {
-            ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.set(true);
-            return original;
+    @WrapOperation(method = "onPlace", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;scheduleTick(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V"))
+    private void schedulePlacedBlockTick(Level world, BlockPos pos, Block block, int delay, Operation<Void> original) {
+        if (ExplosionUtils.shouldScheduleFallingBlock(pos)) {
+            original.call(world, pos, block, delay);
         }
-        boolean canFall = original && ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.get();
-        ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.set(true);
-        return canFall;
     }
 
+    @WrapOperation(method = "updateShape", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/ScheduledTickAccess;scheduleTick(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V"))
+    private void scheduleNeighborUpdateTick(ScheduledTickAccess world, BlockPos pos, Block block, int delay, Operation<Void> original) {
+        if (ExplosionUtils.shouldScheduleFallingBlock(pos)) {
+            original.call(world, pos, block, delay);
+        }
+    }
 }

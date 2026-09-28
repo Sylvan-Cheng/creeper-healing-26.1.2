@@ -12,8 +12,8 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.ChestBlock;
-import net.minecraft.world.level.block.FallingBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.ChestType;
@@ -96,7 +96,11 @@ public class SingleAffectedBlock implements AffectedBlock {
         if (this.timer >= 0) {
             return;
         }
-        this.tryHealing(server, explosionEvent);
+        if (this.tryHealing(server, explosionEvent)) {
+            this.setPlaced();
+        } else {
+            this.timer = 20;
+        }
     }
 
     @Override
@@ -116,9 +120,7 @@ public class SingleAffectedBlock implements AffectedBlock {
         return TYPE;
     }
 
-    protected void tryHealing(MinecraftServer server, ExplosionEvent currentExplosionEvent) {
-
-        this.setPlaced();
+    protected boolean tryHealing(MinecraftServer server, ExplosionEvent currentExplosionEvent) {
         BlockState state = this.getBlockState();
         BlockPos pos = this.getBlockPos();
         Level world = this.getWorld(server);
@@ -130,28 +132,39 @@ public class SingleAffectedBlock implements AffectedBlock {
         StringMapSection replaceMapSection = ConfigUtils.getRawStringMapSection(ConfigUtils.REPLACE_MAP);
         Setting<String, ?> replaceMapValue = replaceMapSection.get(blockIdentifier);
         if (replaceMapValue != null && !this.shouldForceHeal()) {
-            state = BuiltInRegistries.BLOCK.getValue(Identifier.parse(replaceMapValue.getValue().getRaw())).withPropertiesOf(state);
-            stateReplaced = true;
+            try {
+                Identifier replacementId = Identifier.parse(replaceMapValue.getValue().getRaw());
+                if (!BuiltInRegistries.BLOCK.containsKey(replacementId)) {
+                    throw new IllegalArgumentException("Unknown block: " + replacementId);
+                }
+                Block replacement = BuiltInRegistries.BLOCK.getValue(replacementId);
+                if (replacement != null) {
+                    state = replacement.withPropertiesOf(state);
+                    stateReplaced = true;
+                }
+            } catch (RuntimeException e) {
+                // An invalid config entry must not abort the server tick.
+                io.github.arkosammy12.creeperhealing.CreeperHealing.LOGGER.warn("Invalid replacement for {}: {}", blockIdentifier, replaceMapValue.getValue().getRaw(), e);
+            }
         }
 
-
-        if (!this.shouldHealBlock(world)) {
-            return;
+        if (!this.shouldHealBlock(world) || (!this.shouldForceHeal() && !state.canSurvive(world, pos))) {
+            return false;
         }
 
         ExplosionUtils.pushEntitiesUpwards(world, pos, state, false);
-        boolean makeFallingBlocksFall = ConfigUtils.getRawBooleanSetting(ConfigUtils.MAKE_FALLING_BLOCKS_FALL);
-        if (state.getBlock() instanceof FallingBlock) {
-            ExplosionUtils.FALLING_BLOCK_SCHEDULE_TICK.set(makeFallingBlocksFall);
+        if (!ExplosionUtils.placeRestoredBlock(world, pos, state)) {
+            return false;
         }
-        world.setBlockAndUpdate(pos, state);
-        this.handleChestBlockIfNeeded(currentExplosionEvent, state, pos, server);
         boolean healNbt = this.nbt != null && !stateReplaced;
         if (healNbt) {
             world.setBlockEntity(BlockEntity.loadStatic(pos, state, this.nbt, world.registryAccess()));
         }
+        this.setPlaced();
+        this.handleChestBlockIfNeeded(currentExplosionEvent, state, pos, server);
         ExplosionUtils.playBlockPlacementSoundEffect(world, pos, state);
         ExplosionUtils.spawnParticles(world, pos);
+        return true;
     }
 
     protected boolean shouldHealBlock(Level world) {
@@ -206,7 +219,9 @@ public class SingleAffectedBlock implements AffectedBlock {
             if (!affectedState.is(Blocks.CHEST) || !affectedPosition.equals(otherHalfPos)) {
                 continue;
             }
-            singleAffectedBlock.tryHealing(server, explosionEvent);
+            if (singleAffectedBlock.tryHealing(server, explosionEvent)) {
+                singleAffectedBlock.setPlaced();
+            }
         }
 
     }

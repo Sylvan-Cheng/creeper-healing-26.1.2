@@ -47,9 +47,10 @@ public interface AffectedBlock {
         ResourceKey<Level> worldRegistryKey = world.dimension();
         long blockPlacementDelay = ConfigUtils.getBlockPlacementDelay();
         boolean restoreBlockNbt = ConfigUtils.getRawBooleanSetting(ConfigUtils.RESTORE_BLOCK_NBT);
-        if ((firstHalfBlockEntity != null && secondHalfBlockEntity != null) && restoreBlockNbt) {
-            return new DoubleAffectedBlock(firstHalfPos, firstHalfState, firstHalfBlockEntity.saveWithFullMetadata(world.registryAccess()), secondHalfPos, secondHalfState, secondHalfBlockEntity.saveWithFullMetadata(world.registryAccess()), worldRegistryKey, blockPlacementDelay, false);
-        }
-        return new DoubleAffectedBlock(firstHalfPos, firstHalfState, null, secondHalfPos, secondHalfState, null, worldRegistryKey, blockPlacementDelay, false);
+        return new DoubleAffectedBlock(firstHalfPos, firstHalfState,
+                restoreBlockNbt && firstHalfBlockEntity != null ? firstHalfBlockEntity.saveWithFullMetadata(world.registryAccess()) : null,
+                secondHalfPos, secondHalfState,
+                restoreBlockNbt && secondHalfBlockEntity != null ? secondHalfBlockEntity.saveWithFullMetadata(world.registryAccess()) : null,
+                worldRegistryKey, blockPlacementDelay, false);
     }
 }
